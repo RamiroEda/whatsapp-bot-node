@@ -19,7 +19,7 @@ export abstract class IGroupChat {
 
       if (chat.id.user !== groupId || !chat.isGroup) return;
 
-      this.setUser(contact);
+      // this.setUser(contact);
 
       this.onNewMessage(msg, chat as GroupChat, contact);
     });
@@ -29,9 +29,9 @@ export abstract class IGroupChat {
 
       if (chat.id.user !== groupId || !chat.isGroup) return;
 
-      const contact = await msg.getContact();
+      // const contact = await msg.getContact();
 
-      this.onUserJoins(contact);
+      // this.onUserJoins(contact);
     });
 
     client.on('group_leave', async (msg) => {
@@ -41,7 +41,7 @@ export abstract class IGroupChat {
 
       const contact = await msg.getContact();
 
-      this.onUserLeaves(contact);
+      // this.onUserLeaves(contact);
 
       await prisma.user.update({
         where: {
@@ -54,37 +54,61 @@ export abstract class IGroupChat {
         },
       });
 
+      const users = await prisma.user.findMany({
+        where: {
+          chatId: groupId,
+        },
+      });
+
       msg.reply(`Records
 ==================
-👑${[...this.leaveCount.entries()]
-        .sort((a, b) => b[1].count - a[1].count)
-        .map(([, count]) => `${count.name}:\t\t\t${count.count}`)}\n`);
+👑${users
+        .sort((a, b) => b.leaveCount - a.leaveCount)
+        .map((user) => `${user.pushname}:\t\t\t${user.pushname}`)}\n`);
     });
   }
 
-  private setUser(contact: Contact): void {
-    const previewsContact = this.participants.find(
-      (user) => user.id.user === contact.id.user,
-    );
-    const index = this.participants.indexOf(previewsContact);
+  // private async setUser(contact: Contact): Promise<void> {
+  //   await prisma.user.upsert({
+  //     create: {
+  //       ...contact,
+  //       Chat: {
+  //         connect: {
+  //           chatId: this.groupId,
+  //         },
+  //       },
+  //     },
+  //     update: {
+  //       ...contact,
+  //       Chat: {
+  //         connect: {
+  //           chatId: this.groupId,
+  //         },
+  //       },
+  //     },
+  //     where: {
+  //       contactId: contact.id.user,
+  //     },
+  //   });
+  //   const index = this.participants.indexOf(previewsContact);
 
-    if (index >= 0) {
-      this.participants[index] = contact;
-    } else {
-      this.participants.push(contact);
-    }
-  }
+  //   if (index >= 0) {
+  //     this.participants[index] = contact;
+  //   } else {
+  //     this.participants.push(contact);
+  //   }
+  // }
 
-  private removeUser(contact: Contact): void {
-    const previewsContact = this.participants.find(
-      (user) => user.id.user === contact.id.user,
-    );
-    const index = this.participants.indexOf(previewsContact);
+  // private removeUser(contact: Contact): void {
+  //   const previewsContact = this.participants.find(
+  //     (user) => user.id.user === contact.id.user,
+  //   );
+  //   const index = this.participants.indexOf(previewsContact);
 
-    if (index >= 0) {
-      this.participants.splice(index, 1);
-    }
-  }
+  //   if (index >= 0) {
+  //     this.participants.splice(index, 1);
+  //   }
+  // }
 
   private async onNewMessage(
     message: Message,
@@ -120,11 +144,11 @@ export abstract class IGroupChat {
     }
   }
 
-  protected onUserJoins(contact: Contact): void {
-    this.setUser(contact);
+  protected onUserJoins(): void {
+    // this.setUser(contact);
   }
 
-  protected onUserLeaves(contact: Contact): void {
-    this.removeUser(contact);
+  protected onUserLeaves(): void {
+    // this.removeUser(contact);
   }
 }
